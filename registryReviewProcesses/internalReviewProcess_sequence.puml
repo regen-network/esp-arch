@@ -1,0 +1,63 @@
+@startuml
+
+title "Sequence Diagram for Document Submission\n and Internal Review"
+
+box Application #AliceBlue
+    participant "Developer"             as developer
+    participant "Registry Team"         as registry
+end box
+
+box Backend #MintCream
+    database        "StateMachine"          as sm
+    database        "Registry Server"       as server
+    database        "Ledger"                as ledger
+end box
+
+== Initial Submission ==
+hnote over developer: create document
+developer -> sm: submit document
+
+activate sm
+sm -> server:document stored
+server -> ledger:document anchored
+sm -> ledger:document signed
+sm -> registry: document ready for review
+deactivate sm
+
+== Internal Review ==
+group iterative
+    'registry team reviews
+    hnote over registry: review document
+    registry -> sm: submit review
+    activate sm
+    sm -> server:document stored
+    server -> ledger:document anchored
+    sm -> ledger:document signed
+    sm -> developer: feedback provided to developer
+    deactivate sm
+
+    'developer resubmission
+    hnote over developer: upgrade document
+    developer -> sm: submit reivsed document
+    activate sm
+    sm -> server:document stored
+    server -> ledger:document anchored
+    sm -> ledger:document signed
+    sm -> registry: revised document ready for review
+    deactivate sm
+
+    'registry team reviews new document
+    hnote over registry: review document
+end
+
+== Approval ==
+hnote over registry: review document
+registry -> sm: approve document submission
+activate sm
+sm -> server:document stored
+server -> ledger:document anchored
+sm -> ledger:document signed
+sm -> developer: document approved
+deactivate sm
+
+@enduml
